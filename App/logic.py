@@ -1,24 +1,52 @@
 import time
+import csv
+import sys
+from math import asin, sin, cos, sqrt, radians
+from datetime import datetime
 
-def new_logic():
-    """
-    Crea el catalogo para almacenar las estructuras de datos
-    """
-    #TODO: Llama a las funciónes de creación de las estructuras de datos
-    pass
+from DataStructures.Lists import array_list as al
+from DataStructures.Lists import single_linked_list as sl
+from DataStructures.Queue import queue as q
+from DataStructures.Stack import stack as st
+from DataStructures.Maps import map_linear_probing as lp
+from DataStructures.Maps import map_separate_chaining as sc 
 
+data_structure = None
 
-# Funciones para la carga de datos
+def new_logic(user_data_structure):
+    if user_data_structure == "1":
+        data_structure = al
+    else:
+        data_structure = sl
 
-def load_data(catalog, filename):
+    catalog = {"neighborhood":None,
+               "Taxis" : None
+        } 
+    catalog["neighborhood"] = data_structure.new_list()
+    catalog["Taxis"] = data_structure.new_list()
+    return catalog
+
+def load_taxis_data(catalog, file_t):
     """
     Carga los datos del reto
     """
-    # TODO: Realizar la carga de datos
-    pass
-
-# Funciones de consulta sobre el catálogo
-
+    file_t = 'data_dir' + 'taxis-large.csv'
+    input_del_archivo = csv.DictReader(open(file_t, encoding="utf-8"))
+    for taxi in input_del_archivo:
+        al.add_last(catalog['taxis'], taxi)
+        size = al.size(catalog['taxis'])
+    return size
+    
+def load_neighborhoods_data(catalog, file_n):
+    """
+    Carga los datos del reto
+    """
+    file_n =  'data_dir' + 'nyc-neighbothoods.csv'
+    input_del_archivo = csv.DictReader(open(file_n, encoding="utf-8"))
+    for neighborhood in input_del_archivo:
+        al.add_last(catalog['neighborhoods'], neighborhood)
+    size = al.size(catalog['neighbothoods'])
+    return size
 
 def req_1(catalog):
     """
