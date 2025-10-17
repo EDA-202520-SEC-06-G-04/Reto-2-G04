@@ -1,4 +1,5 @@
 import sys
+import tabulate
 
 
 def new_logic():
@@ -47,7 +48,15 @@ def print_req_2(control):
         Función que imprime la solución del Requerimiento 2 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 2
-    pass
+    lat_min = float(input("Ingrese la latitud mínima: "))
+    lat_max = float(input("Ingrese la latitud máxima: "))
+    N = int(input("Ingrese el número de trayectos a mostrar (N): "))
+
+    result = controller.req_2(control, lat_min, lat_max, N)
+
+    print("\n=== Resultado Requerimiento 2 ===")
+    print(f"Tiempo de ejecución: {result['time_ms']} ms")
+    print(f"Total de trayectos encontrados: {result['total']}")
 
 
 def print_req_3(control):
@@ -71,7 +80,14 @@ def print_req_5(control):
         Función que imprime la solución del Requerimiento 5 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 5
-    pass
+    datehour = input("Ingrese la fecha y hora (formato YYYY-MM-DD HH): ")
+    N = int(input("Ingrese el número de trayectos a mostrar (N): "))
+
+    result = controller.req_5(control, datehour, N)
+
+    print("\n=== Resultado Requerimiento 5 ===")
+    print(f"Tiempo de ejecución: {result['time_ms']} ms")
+    print(f"Total de trayectos encontrados: {result['total']}")
 
 
 def print_req_6(control):
