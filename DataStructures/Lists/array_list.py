@@ -159,3 +159,125 @@ def sub_list(my_list, pos_i, num_elements):
     else: 
         
         return None
+    
+def default_sort_criteria(element_1, element_2):
+    rta = False
+    if element_1 < element_2:
+        rta = True
+    else:
+        rta = False
+    return rta
+
+def selection_sort(my_list, sort_crit): 
+    
+    siz = size(my_list)
+    
+    for i in range(siz):
+        for j in range(i, my_list["size"]):
+            if sort_crit(get_element(my_list, i), get_element(my_list, j)) == True:
+                exchange(my_list, i, j)
+    return my_list
+
+def insertion_sort(my_list, sort_crit):
+    
+    siz = size(my_list)
+    
+    for i in range(1, siz):
+        j = i 
+        while j > 0 and sort_crit(get_element(my_list, j), get_element(my_list, (j - 1))) == True:
+                exchange(my_list, j, j-1)
+                j -= 1
+    
+    return my_list 
+
+
+
+def shell_sort(my_list, sort_crit):
+    
+    siz = size(my_list)
+    dist = siz // 2
+    
+    
+    while dist > 0:
+        for i in range (dist, siz):
+            j = i 
+            elem =  j - dist
+            
+            while j>= dist and sort_crit(get_element(my_list, j), get_element(my_list, (elem))):
+                exchange(my_list, j, elem)
+                j -= dist
+        
+        dist //= 2
+        
+    return my_list
+
+
+def merge_sort(my_list, sort_crit):
+    
+    rta = new_list()
+    siz = size(my_list)
+    i = 0
+    j = 0 
+    
+    if siz <= 1:
+        return my_list
+    
+    mitad = siz // 2 
+    lt1 = sub_list(my_list, 0, mitad)
+    lt2 = sub_list(my_list, mitad, (siz - mitad))
+    
+    p_iz = merge_sort(lt1, sort_crit)
+    p_der = merge_sort(lt2, sort_crit)       
+    
+
+    while i < p_iz["size"] and j < p_der["size"]:
+        elem1 = get_element(p_iz, i)
+        elem2 = get_element(p_der, j)
+        
+        if sort_crit(elem1, elem2) == True:
+            add_last(rta, elem1)
+            i += 1
+        else:
+            add_last(rta, elem2)
+            j += 1
+    
+    while i < p_iz["size"]:
+        add_last(rta, get_element(p_iz, i))
+        i += 1
+    while j < p_der["size"]:
+        add_last(rta, get_element(p_der, j))
+        j += 1
+    
+    return rta 
+
+
+def quick_sort(my_list, sort_crit):
+    
+    men = new_list()
+    mayo = new_list()
+    siz = size(my_list)
+    
+    if siz <= 1:
+        return my_list
+    pivot = get_element(my_list, (siz -1))
+    
+    
+    for i in range(0, siz -1):
+        elem = get_element(my_list, i)
+        if sort_crit(elem, pivot) == True:
+            add_last(men, elem)    
+        else: 
+            add_last(mayo, elem)
+
+    lt_men = quick_sort(men, sort_crit)
+    lt_may = quick_sort(mayo, sort_crit)
+    
+    rta = new_list()
+    
+    for i in range (lt_men["size"]):
+        add_last(rta, get_element(lt_men, i)) 
+        
+    for j in range(lt_may["size"]):
+        add_last(rta, get_element(lt_may, j) )
+                       
+    return rta

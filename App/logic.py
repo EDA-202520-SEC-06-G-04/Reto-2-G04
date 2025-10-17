@@ -48,12 +48,38 @@ def load_neighborhoods_data(catalog, file_n):
     size = al.size(catalog['neighbothoods'])
     return size
 
-def req_1(catalog):
-    """
-    Retorna el resultado del requerimiento 1
-    """
-    # TODO: Modificar el requerimiento 1
-    pass
+def req_1(catalog, fecha_y_hora_inicial, fecha_y_hora_final, tamanio_muestra):
+    
+    start_time = get_time()
+    
+    pickup_time = datetime.datetime.strptime(fecha_y_hora_inicial,"%Y - %m - %d %H:%M:%S")
+    dropoff_time = datetime.datetime.strptime(fecha_y_hora_final,"%Y - %m - %d %H:%M:%S")
+        
+    for viajes in catalog["taxis"]:
+        elementos_filtrados = 0
+        filtro = al.new_list()
+        pickup_datetime_taxi = catalog["taxis"]["pickup_datetime"][viajes]
+        dropoff_datetime_taxi = catalog["taxis"]["dropoff_datetime"][viajes]
+        
+        if pickup_datetime_taxi >= pickup_time and dropoff_datetime_taxi <= dropoff_time:
+            al.add_last(filtro, catalog["taxis"])
+            elementos_filtrados += 1
+        sort_crit = al.default_sort_criteria(pickup_datetime_taxi,pickup_time)
+        al.quick_sort(filtro, sort_crit)
+            
+        if elementos_filtrados <= (2 * tamanio_muestra):
+            rta = filtro
+                
+        else:
+            primero = al.sub_list(filtro,0,tamanio_muestra)
+            size = al.size(filtro)
+            ultimo = al.sub_list(filtro, size, tamanio_muestra) 
+            rta = primero,ultimo   
+        
+    end_time = get_time()      
+    tiempo = delta_time(start_time, end_time)            
+  
+    return elementos_filtrados,rta,tiempo
 
 
 def req_2(catalog, lat_min, lat_max, N):
@@ -94,12 +120,52 @@ def req_3(catalog):
     pass
 
 
-def req_4(catalog):
-    """
-    Retorna el resultado del requerimiento 4
-    """
-    # TODO: Modificar el requerimiento 4
-    pass
+def req_4(catalog, fecha_terminacion, momento, tiempo_referencia, tamanio_muestra):
+    
+    start_time = get_time()
+    elementos_filtrados = 0
+    limite = False
+    previo = sc.new_map(tamanio_muestra, 4)
+    posterior = sc.new_map(tamanio_muestra, 4)
+    filtro = al.new_list()
+    
+    fecha_ref = datetime.datetime.strptime(fecha_terminacion, "%Y-%m-%d").date()
+    hora_ref = datetime.datetime.strptime(tiempo_referencia, "%H:%M:%S").time()
+
+    for viajes in catalog["taxis"]:
+        dropoff_datetime_taxi = catalog["taxis"]["dropoff_datetime"][viajes]
+
+        if dropoff_datetime_taxi.date() == fecha_ref:
+            if momento == "DESPUES" and dropoff_datetime_taxi.time() > hora_ref:
+                al.add_last(filtro, catalog["taxis"][viajes])
+                elementos_filtrados += 1
+            elif momento == "ANTES" and dropoff_datetime_taxi.time() < hora_ref:
+                al.add_last(filtro, catalog["taxis"][viajes])
+                elementos_filtrados += 1
+    
+    al.selection_sort(filtro, "dropoff_datetime")
+
+    if elementos_filtrados <= (2 * tamanio_muestra):
+        rta = filtro
+    else:
+        primero = al.sub_list(filtro, 0, tamanio_muestra)
+        size = al.size(filtro)
+        ultimo = al.sub_list(filtro, size - tamanio_muestra, tamanio_muestra)
+
+        rta = al.new_list()
+        for i in range(al.size(primero)):
+            al.add_last(rta, al.get_element(primero, i))
+        for j in range(al.size(ultimo)):
+            al.add_last(rta, al.get_element(ultimo, j))
+
+
+    sc.put(previo, "cantidad_viajes", elementos_filtrados)
+    sc.put(posterior, "muestra", rta)
+
+    end_time = get_time()
+    tiempo = delta_time(start_time, end_time)
+    
+    return elementos_filtrados, rta, tiempo
 
 
 def req_5(catalog, datehour, N):
