@@ -3,14 +3,10 @@ import csv
 import sys
 import os
 from math import asin, sin, cos, sqrt, radians
-from datetime import datetime
-
+import datetime 
 
 from DataStructures.Lists import array_list as al
 from DataStructures.Lists import single_linked_list as sl
-from DataStructures.Queue import queue as q
-from DataStructures.Stack import stack as st
-from DataStructures.Maps import map_linear_probing as lp
 from DataStructures.Maps import map_separate_chaining as sc 
 
 
@@ -49,50 +45,173 @@ def load_neighborhoods_data(catalog, file_n):
     for neighborhood in input_del_archivo:
         file_n = "Data/nyc-neighborhoods.csv"
         al.add_last(catalog['neighborhoods'], neighborhood)
-        size = al.size(catalog['neighborhoods'])
-    return size
+    size = al.size(catalog['neighbothoods'])
+    return size  
 
-def req_1(catalog, ):
+
+def sort_crit_time(v1, v2):
+    dt1 = datetime.datetime.strptime(v1["pickup_datetime"], "%Y-%m-%d %H:%M:%S")
+    dt2 = datetime.datetime.strptime(v2["pickup_datetime"], "%Y-%m-%d %H:%M:%S")
+    return al.default_sort_criteria(dt1, dt2)
+       
+def req_1(catalog, fecha_y_hora_inicial, fecha_y_hora_final, tamanio_muestra):   
+    start_time = get_time()
+  
+    pickup_time = datetime.datetime.strptime(fecha_y_hora_inicial, "%Y-%m-%d %H:%M:%S")
+    dropoff_time = datetime.datetime.strptime(fecha_y_hora_final, "%Y-%m-%d %H:%M:%S")
     
-    pass
+    elementos_filtrados = 0
+    quedan = al.new_list()
+    
+    for viaje in catalog["taxis"]:
+        pickup_datetime_taxi = datetime.datetime.strptime(viaje["pickup_datetime"], "%Y-%m-%d %H:%M:%S")
+        dropoff_datetime_taxi = datetime.datetime.strptime(viaje["dropoff_datetime"], "%Y-%m-%d %H:%M:%S")
+       
+        if pickup_datetime_taxi >= pickup_time and dropoff_datetime_taxi <= dropoff_time:
+            al.add_last(quedan, viaje)
+            elementos_filtrados += 1    
+    
+    quedan = al.merge_sort(quedan, sort_crit_time)
+        
+    if elementos_filtrados <= (2 * tamanio_muestra):
+        rta = quedan
+    else:
+        primero = al.sub_list(quedan, 0, tamanio_muestra)
+        size = al.size(quedan)
+        ultimo = al.sub_list(quedan, size - tamanio_muestra, tamanio_muestra)
+        rta = al.new_list()
+        for i in range(al.size(primero)):
+            al.add_last(rta, al.get_element(primero, i))
+        for i in range(al.size(ultimo)):
+            al.add_last(rta, al.get_element(ultimo, i))
+    
+    end_time = get_time()      
+    tiempo = delta_time(start_time, end_time)            
+  
+    return elementos_filtrados, rta, tiempo
 
-def req_2(catalog, lat_min, lat_max, N):
+def req_2(catalog):
     """
     Retorna el resultado del requerimiento 2
     """
-    import time
-    start = time.process_time()
+    # TODO: Modificar el requerimiento 2
+    pass
 
-    trips = catalog['trips']
-    filtered = [t for t in trips if lat_min <= float(t['pickup_latitude']) <= lat_max]
-
-    filtered.sort(key=lambda t: (float(t['pickup_latitude']), float(t['pickup_longitude'])), reverse=True)
-
-    total = len(filtered)
-    end = time.process_time()
-    time_ms = (end - start) * 1000
-
-    if total <= 2 * N:
-        first, last = filtered, []
+def req_4(catalog, fecha_terminacion, momento, tiempo_referencia, tamanio_muestra):
+   
+    start_time = get_time()
+    fecha_term = datetime.datetime.strptime(fecha_terminacion, "%Y-%m-%d").date()
+    tiempo_ref = datetime.datetime.strptime(tiempo_referencia, "%H:%M:%S").time()
+    
+    my_table = sc.new_map(1000, 4)
+    
+    for viaje in catalog["taxis"]:
+        dropoff_datetime_str = viaje["dropoff_datetime"]
+        dropoff_datetime = datetime.datetime.strptime(dropoff_datetime_str, "%Y-%m-%d %H:%M:%S")
+        fecha_drop = dropoff_datetime.date()
+        
+        if not sc.contains(my_table, fecha_drop):
+            sc.put(my_table, fecha_drop, al.new_list())
+        lista_fecha = sc.get(my_table, fecha_drop)
+        al.add_last(lista_fecha, viaje)
+    
+    if sc.contains(my_table, fecha_term):
+        lista_filtrada = al.new_list()
+        lista_fecha = sc.get(my_table, fecha_term)
+        
+        for viaje in lista_fecha:
+            dropoff_time = datetime.datetime.strptime(viaje["dropoff_datetime"], "%Y-%m-%d %H:%M:%S").time()
+            if momento == "ANTES" and dropoff_time < tiempo_ref:
+                al.add_last(lista_filtrada, viaje)
+            elif momento == "DESPUES" and dropoff_time > tiempo_ref:
+                al.add_last(lista_filtrada, viaje)
+        
+        elementos_filtrados = al.size(lista_filtrada)        
+        lista_filtrada = al.merge_sort(lista_filtrada, sort_crit_time)
+        
+        if elementos_filtrados <= (2 * tamanio_muestra):
+            muestra = lista_filtrada
+        else:
+            primero = al.sub_list(lista_filtrada, 0, tamanio_muestra)
+            size = al.size(lista_filtrada)
+            ultimo = al.sub_list(lista_filtrada, size - tamanio_muestra, tamanio_muestra)
+            muestra = al.new_list()
+            for pos in primero:
+                al.add_last(muestra, pos)
+            for pos in ultimo:
+                al.add_last(muestra, pos)
     else:
-        first, last = filtered[:N], filtered[-N:]
-
-    return {
-        'time_ms': round(time_ms, 2),
-        'total': total,
-        'first': first,
-        'last': last
-    }
+        elementos_filtrados = 0
+        muestra = al.new_list()
     
-
-def req_4(catalog):
+    end_time = get_time()
+    tiempo = delta_time(start_time, end_time)
     
+    return elementos_filtrados, muestra, tiempo
+
+def sort_crit(v1, v2):
+    dt1 = datetime.datetime.strptime(v1["pickup_datetime"], "%Y-%m-%d %H:%M:%S")
+    dt2 = datetime.datetime.strptime(v2["pickup_datetime"], "%Y-%m-%d %H:%M:%S")
+    return al.default_sort_criteria(dt2, dt1)
+
+def req_5(catalog, hora_terminacion, tamanio_a_mostrar):
+    start_time = get_time()
+    
+    hash_table = sc.new_map(10000, 4)
+    for viaje in catalog["taxis"]:
+        dropoff_datetime = datetime.datetime.strptime(viaje["dropoff_datetime"], "%Y-%m-%d %H:%M:%S")
+        llave = dropoff_datetime.strftime("%Y-%m-%d %H")
+        if not sc.contains(hash_table, llave):
+            sc.put(hash_table, llave, al.new_list())
+        lista_llave = sc.get(hash_table, llave)
+        al.add_last(lista_llave, viaje)
+    
+    if sc.contains(hash_table, hora_terminacion):
+        trips = sc.get(hash_table, hora_terminacion)
+        
+        trips = al.merge_sort(trips, sort_crit)
+        
+        total = al.size(trips)
+        
+        if total <= 2 * tamanio_a_mostrar:
+            muestra = trips
+        else:
+            primero = al.sub_list(trips, 0, tamanio_a_mostrar)
+            ultimo = al.sub_list(trips, total - tamanio_a_mostrar, tamanio_a_mostrar)
+            muestra = al.new_list()
+            for pos in primero:
+                al.add_last(muestra, pos)
+            for pos in ultimo:
+                al.add_last(muestra, pos)
+    else:
+        total = 0
+        muestra = al.new_list()
+
+    end_time = get_time()
+    tiempo = delta_time(start_time, end_time)
+    
+    return total, muestra, tiempo
+
+def req_6(catalog):
+    """
+    Retorna el resultado del requerimiento 6
+    """
+    # TODO: Modificar el requerimiento 6
     pass
 
 
-def req_5(catalog, datehour, N):
-    
-    pass
+# Funciones para medir tiempos de ejecucion
 
-def req_6(catalog, datehour, N):
-    pass
+def get_time():
+    """
+    devuelve el instante tiempo de procesamiento en milisegundos
+    """
+    return float(time.perf_counter()*1000)
+
+
+def delta_time(start, end):
+    """
+    devuelve la diferencia entre tiempos de procesamiento muestreados
+    """
+    elapsed = float(end - start)
+    return elapsed
