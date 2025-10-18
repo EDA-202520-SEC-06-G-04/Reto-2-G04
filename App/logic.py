@@ -91,12 +91,33 @@ def req_1(catalog, fecha_y_hora_inicial, fecha_y_hora_final, tamanio_muestra):
   
     return elementos_filtrados, rta, tiempo
 
-def req_2(catalog):
+def req_2(catalog, lat_min, lat_max, N):
     """
     Retorna el resultado del requerimiento 2
     """
-    # TODO: Modificar el requerimiento 2
-    pass
+    import time
+    start = time.process_time()
+
+    trips = catalog['trips']
+    filtered = [t for t in trips if lat_min <= float(t['pickup_latitude']) <= lat_max]
+
+    filtered.sort(key=lambda t: (float(t['pickup_latitude']), float(t['pickup_longitude'])), reverse=True)
+
+    total = len(filtered)
+    end = time.process_time()
+    time_ms = (end - start) * 1000
+
+    if total <= 2 * N:
+        first, last = filtered, []
+    else:
+        first, last = filtered[:N], filtered[-N:]
+
+    return {
+        'time_ms': round(time_ms, 2),
+        'total': total,
+        'first': first,
+        'last': last
+    }
 
 def req_4(catalog, fecha_terminacion, momento, tiempo_referencia, tamanio_muestra):
    
