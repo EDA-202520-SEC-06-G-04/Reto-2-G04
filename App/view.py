@@ -105,43 +105,6 @@ def print_req_2(control):
     print(f"Tiempo de ejecución: {result['time_ms']} ms")
     print(f"Total de trayectos encontrados: {result['total']}")
 
-
-def print_req_3(control):   
-    """
-        Función que imprime la solución del Requerimiento 3 en consola
-    """
-    # TODO: Imprimir el resultado del requerimiento 3
-    min_distance=float(input("Ingrese la distancia minima (millas):"))
-    max_distance=float(input("Ingrese la distancia maxima (millas):"))
-    size_muestra=int(input("Ingrese el tamaño de la muestra:"))
-
-    resultado= logic.req_3(control, min_distance, max_distance, size_muestra)
-    print("Tiempo de ejecucion:", resultado[0], "ms")
-    print("Numero de trayectos en el rango", resultado[1])
-    headers=["Fecha-recogida", "Lat,long-recogida", "Fecha-terminacion", "Lat,Long-terminacion", "Distancia (mi)", "Costo(USD)"]
- 
-    if resultado[1] >=size_muestra*2:
-        tabla_primeros= [[
-            trayecto["pickup_datetime"],
-            f"[{round(float(trayecto["pickup_latitude"]), 4)}, {round(float(trayecto["pickup_longitude"]),4)}]",
-            trayecto["dropoff_datetime"],
-            f"[{round(float(trayecto["dropoff_latitude"]), 4)}, {round(float(trayecto["dropoff_longitude"]),4)}]",
-            round(float(trayecto["trip_distance"]), 2),
-            round(float(trayecto["total_amount"]), 2)
-            ] for trayecto in resultado[2]["elements"]]
-        
-        tabla_ultimos= [[
-            trayecto["pickup_datetime"],
-            f"[{round(float(trayecto["pickup_latitude"]), 4)}, {round(float(trayecto["pickup_longitude"]),4)}]",
-            trayecto["dropoff_datetime"],
-            f"[{round(float(trayecto["dropoff_latitude"]), 4)}, {round(float(trayecto["dropoff_longitude"]),4)}]",
-            round(float(trayecto["trip_distance"]), 2),
-            round(float(trayecto["total_amount"]), 2)
-            ] for trayecto in resultado[3]["elements"]]
-    
-        print("\nPrimeros", size_muestra, "trayectos")
-        print(tabulate(tabla_primeros, headers=headers, tablefmt="fancy_grid"))
-
 def print_req_4(control):
     """
         Función que imprime la solución del Requerimiento 4 en consola
@@ -346,8 +309,8 @@ def main():
         elif int(inputs) == 2:
             print_req_2(control)
 
-        elif int(inputs) == 3:
-            print_req_3(control)
+        #elif int(inputs) == 3:
+            #print_req_3(control)
 
         elif int(inputs) == 4:
             print_req_4(control)
