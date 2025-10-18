@@ -214,6 +214,11 @@ def req_5(catalog, hora_terminacion, tamanio_a_mostrar):
     
     return total, muestra, tiempo
 
+def sort_crit_6(v1, v2):
+    
+        dt1 = datetime.datetime.strptime(v1["pickup_datetime"], "%Y-%m-%d %H:%M:%S")
+        dt2 = datetime.datetime.strptime(v2["pickup_datetime"], "%Y-%m-%d %H:%M:%S")
+        return al.default_sort_criteria(dt1, dt2)
 def req_6(catalog, neighborhood_name, hora_inicial, hora_final, tamanio_a_mostrar):
     start_time = get_time()
     
@@ -253,13 +258,8 @@ def req_6(catalog, neighborhood_name, hora_inicial, hora_final, tamanio_a_mostra
                 "distancia_barrio": distancia
             }
             al.add_last(filtrados, viaje_filtrado)
-    
-    def sort_crit(v1, v2):
-        dt1 = datetime.datetime.strptime(v1["pickup_datetime"], "%Y-%m-%d %H:%M:%S")
-        dt2 = datetime.datetime.strptime(v2["pickup_datetime"], "%Y-%m-%d %H:%M:%S")
-        return al.default_sort_criteria(dt1, dt2)
-    
-    filtrados = al.merge_sort(filtrados, sort_crit)
+        
+    filtrados = al.merge_sort(filtrados, sort_crit_6)
     
     total = al.size(filtrados)
     
