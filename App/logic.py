@@ -2,12 +2,14 @@ import time
 import csv
 import sys
 import math
+import os
 from math import asin, sin, cos, sqrt, radians
 import datetime 
 
 from DataStructures.Lists import array_list as al
 from DataStructures.Lists import single_linked_list as sl
 from DataStructures.Maps import map_separate_chaining as sc 
+
 
 data_structure = None
 
@@ -28,7 +30,7 @@ def load_taxis_data(catalog, file_t):
     """
     Carga los datos del reto
     """
-    file_t = 'data_dir' + 'taxis-large.csv'
+    file_t = "Data/taxis-large.csv"
     input_del_archivo = csv.DictReader(open(file_t, encoding="utf-8"))
     for taxi in input_del_archivo:
         al.add_last(catalog['taxis'], taxi)
@@ -39,9 +41,10 @@ def load_neighborhoods_data(catalog, file_n):
     """
     Carga los datos del reto
     """
-    file_n =  'data_dir' + 'nyc-neighbothoods.csv'
+    file_n = "Data/taxis-large.csv"
     input_del_archivo = csv.DictReader(open(file_n, encoding="utf-8"))
     for neighborhood in input_del_archivo:
+        file_n = "Data/nyc-neighborhoods.csv"
         al.add_last(catalog['neighborhoods'], neighborhood)
     size = al.size(catalog['neighbothoods'])
     return size  

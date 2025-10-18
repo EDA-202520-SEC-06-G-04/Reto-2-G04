@@ -8,10 +8,16 @@ from DataStructures.Maps import map_separate_chaining as sc
 
 def new_logic():
     """
-        Se crea una instancia del controlador
+    Crea una instancia de la lógica según la estructura de datos seleccionada
     """
-    #TODO: Llamar la función de la lógica donde se crean las estructuras de datos
-    pass
+    print("Seleccione la estructura de datos que desea usar:")
+    print("1 - Array List")
+    print("2 - Single Linked List")
+    estructura = input("Ingrese el número de la estructura (1 o 2): ")
+
+    control = lg.new_logic(estructura)
+    return control
+
 
 def print_menu():
     print("Bienvenido")
@@ -29,7 +35,9 @@ def load_data(control):
     Carga los datos
     """
     #TODO: Realizar la carga de datos
-    pass
+    filename = "Data/taxis-test.csv"
+    catalog = lg.load_data(control, filename)
+    print("Taxis cargados:", al.size(catalog["array_list"]))
 
 
 def print_data(control, id):
@@ -83,7 +91,7 @@ def print_req_1(control):
 
 
 def print_req_2(control):
-    """
+    """|
         Función que imprime la solución del Requerimiento 2 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 2
@@ -103,8 +111,36 @@ def print_req_3(control):
         Función que imprime la solución del Requerimiento 3 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 3
-    pass
+    min_distance=float(input("Ingrese la distancia minima (millas):"))
+    max_distance=float(input("Ingrese la distancia maxima (millas):"))
+    size_muestra=int(input("Ingrese el tamaño de la muestra:"))
 
+    resultado= logic.req_3(control, min_distance, max_distance, size_muestra)
+    print("Tiempo de ejecucion:", resultado[0], "ms")
+    print("Numero de trayectos en el rango", resultado[1])
+    headers=["Fecha-recogida", "Lat,long-recogida", "Fecha-terminacion", "Lat,Long-terminacion", "Distancia (mi)", "Costo(USD)"]
+ 
+    if resultado[1] >=size_muestra*2:
+        tabla_primeros= [[
+            trayecto["pickup_datetime"],
+            f"[{round(float(trayecto["pickup_latitude"]), 4)}, {round(float(trayecto["pickup_longitude"]),4)}]",
+            trayecto["dropoff_datetime"],
+            f"[{round(float(trayecto["dropoff_latitude"]), 4)}, {round(float(trayecto["dropoff_longitude"]),4)}]",
+            round(float(trayecto["trip_distance"]), 2),
+            round(float(trayecto["total_amount"]), 2)
+            ] for trayecto in resultado[2]["elements"]]
+        
+        tabla_ultimos= [[
+            trayecto["pickup_datetime"],
+            f"[{round(float(trayecto["pickup_latitude"]), 4)}, {round(float(trayecto["pickup_longitude"]),4)}]",
+            trayecto["dropoff_datetime"],
+            f"[{round(float(trayecto["dropoff_latitude"]), 4)}, {round(float(trayecto["dropoff_longitude"]),4)}]",
+            round(float(trayecto["trip_distance"]), 2),
+            round(float(trayecto["total_amount"]), 2)
+            ] for trayecto in resultado[3]["elements"]]
+    
+        print("\nPrimeros", size_muestra, "trayectos")
+        print(tabulate(tabla_primeros, headers=headers, tablefmt="fancy_grid"))
 
 def print_req_4(control):
     """
@@ -319,7 +355,7 @@ def main():
         elif int(inputs) == 5:
             print_req_5(control)
 
-        elif int(inputs) == 5:
+        elif int(inputs) == 6:
             print_req_6(control)
 
         elif int(inputs) == 7:
