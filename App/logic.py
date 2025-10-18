@@ -1,6 +1,7 @@
 import time
 import csv
 import sys
+import math
 from math import asin, sin, cos, sqrt, radians
 import datetime 
 
@@ -189,13 +190,70 @@ def req_5(catalog, hora_terminacion, tamanio_a_mostrar):
     
     return total, muestra, tiempo
 
-def req_6(catalog):
-    """
-    Retorna el resultado del requerimiento 6
-    """
-    # TODO: Modificar el requerimiento 6
-    pass
-
+def req_6(catalog, neighborhood_name, hora_inicial, hora_final, tamanio_a_mostrar):
+    start_time = get_time()
+    
+    barrios = catalog["hash_neighborhoods"]
+    if not sc.contains(barrios, neighborhood_name):
+        return 0, al.new_list(), 0
+    
+    barrio_coords = sc.get(barrios, neighborhood_name)
+    lat_barrio, lon_barrio = float(barrio_coords[0]), float(barrio_coords[1])
+    
+    trips = catalog["taxis"]
+    filtrados = al.new_list()
+    
+    hora_i = int(hora_inicial)
+    hora_f = int(hora_final)
+    
+    for viaje in trips:
+        pickup_dt = datetime.datetime.strptime(viaje["pickup_datetime"], "%Y-%m-%d %H:%M:%S")
+        hora_pickup = pickup_dt.hour
+        pickup_lat = float(viaje["pickup_latitude"])
+        pickup_lon = float(viaje["pickup_longitude"])
+        
+        R = 3958.8
+        dlat = math.radians(pickup_lat - lat_barrio)
+        dlon = math.radians(pickup_lon - lon_barrio)
+        a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat_barrio)) * math.cos(math.radians(pickup_lat)) * math.sin(dlon / 2)**2
+        distancia = 2 * R * math.asin(math.sqrt(a))
+        
+        if hora_i <= hora_pickup <= hora_f and distancia <= 0.2:
+            viaje_filtrado = {
+                "pickup_datetime": viaje["pickup_datetime"],
+                "pickup_coords": (pickup_lat, pickup_lon),
+                "dropoff_datetime": viaje["dropoff_datetime"],
+                "dropoff_coords": (float(viaje["dropoff_latitude"]), float(viaje["dropoff_longitude"])),
+                "trip_distance": float(viaje["trip_distance"]),
+                "total_amount": float(viaje["total_amount"]),
+                "distancia_barrio": distancia
+            }
+            al.add_last(filtrados, viaje_filtrado)
+    
+    def sort_crit(v1, v2):
+        dt1 = datetime.datetime.strptime(v1["pickup_datetime"], "%Y-%m-%d %H:%M:%S")
+        dt2 = datetime.datetime.strptime(v2["pickup_datetime"], "%Y-%m-%d %H:%M:%S")
+        return al.default_sort_criteria(dt1, dt2)
+    
+    filtrados = al.merge_sort(filtrados, sort_crit)
+    
+    total = al.size(filtrados)
+    
+    if total <= 2 * tamanio_a_mostrar:
+        muestra = filtrados
+    else:
+        primero = al.sub_list(filtrados, 0, tamanio_a_mostrar)
+        ultimo = al.sub_list(filtrados, total - tamanio_a_mostrar, tamanio_a_mostrar)
+        muestra = al.new_list()
+        for pos in primero:
+            al.add_last(muestra, pos)
+        for pos in ultimo:
+            al.add_last(muestra, pos)
+    
+    end_time = get_time()
+    tiempo = delta_time(start_time, end_time)
+    
+    return total, muestra, tiempo
 
 # Funciones para medir tiempos de ejecucion
 

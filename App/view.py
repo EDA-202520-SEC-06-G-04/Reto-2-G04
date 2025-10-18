@@ -1,5 +1,9 @@
 import sys
 import tabulate
+import logic as lg
+from DataStructures.Lists import array_list as al
+from DataStructures.Lists import single_linked_list as sl
+from DataStructures.Maps import map_separate_chaining as sc 
 
 
 def new_logic():
@@ -30,17 +34,52 @@ def load_data(control):
 
 def print_data(control, id):
     """
-        Función que imprime un dato dado su ID
+    Imprime los datos de un registro dado su ID.
     """
-    #TODO: Realizar la función para imprimir un elemento
-    pass
+    datos = lg.get_data(control, id)
+    
+    if datos is None:
+        print("No se encontró un registro con ese ID.")
+        return
+    
+    print("Información del registro:")
+    headers = ["Campo", "Valor"]
+    rows = [[key, value] for key, value in datos.items()]
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
 
 def print_req_1(control):
     """
-        Función que imprime la solución del Requerimiento 1 en consola
+    Función que imprime la solución del Requerimiento 1 en consola
     """
-    # TODO: Imprimir el resultado del requerimiento 1
-    pass
+    fecha_y_hora_inicial = input("Digite la fecha y hora inicial (formato %Y-%m-%d %H:%M:%S): ").strip()
+    fecha_y_hora_final = input("Digite la fecha y hora final (formato %Y-%m-%d %H:%M:%S): ").strip()
+    tamanio_muestra = int(input("Digite el tamaño de la muestra N: ").strip())
+    total, muestra, tiempo = lg.req_1(control, fecha_y_hora_inicial, fecha_y_hora_final, tamanio_muestra)
+    if al.size(muestra) == 0:
+        print("No se encontraron trayectos para los criterios dados.")
+        return
+    print("\nTiempo de la ejecución del requerimiento en milisegundos:", tiempo)
+    print("Número total de trayectos que cumplieron el filtro de fecha y hora de recogida:", total)
+    headers = [
+        "Tiempo qie toma en ejecutarse la función",
+        "Fecha y tiempo de recogida (AAAA-MM-DD HH:MM:SS) – criterio de ordenamiento",
+        "Latitud y longitud de recogida ([Latitud, Longitud])",
+        "Fecha y tiempo de terminación (AAAA-MM-DD HH:MM:SS)",
+        "Latitud y longitud de terminación ([Latitud, Longitud])",
+        "Distancia recorrida (millas)",
+        "Costo total pagado"
+    ]
+    rows = []
+    for viaje in muestra:
+        rows.append([
+            viaje['pickup_datetime'],
+            f"[{viaje['pickup_latitude']}, {viaje['pickup_longitude']}]",
+            viaje['dropoff_datetime'],
+            f"[{viaje['dropoff_latitude']}, {viaje['dropoff_longitude']}]",
+            viaje['trip_distance'],
+            viaje['total_amount']
+        ])
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
 
 
 def print_req_2(control):
@@ -52,14 +91,14 @@ def print_req_2(control):
     lat_max = float(input("Ingrese la latitud máxima: "))
     N = int(input("Ingrese el número de trayectos a mostrar (N): "))
 
-    result = controller.req_2(control, lat_min, lat_max, N)
+    result = control.req_2(control, lat_min, lat_max, N)
 
     print("\n=== Resultado Requerimiento 2 ===")
     print(f"Tiempo de ejecución: {result['time_ms']} ms")
     print(f"Total de trayectos encontrados: {result['total']}")
 
 
-def print_req_3(control):
+def print_req_3(control):   
     """
         Función que imprime la solución del Requerimiento 3 en consola
     """
@@ -71,31 +110,183 @@ def print_req_4(control):
     """
         Función que imprime la solución del Requerimiento 4 en consola
     """
-    # TODO: Imprimir el resultado del requerimiento 4
-    pass
+    fecha_terminacion = input("Digite la fecha de terminación (formato %Y-%m-%d): ").strip()
+    momento = input("Digite el momento de interés ('ANTES' o 'DESPUES'): ").strip().upper()
+    tiempo_referencia = input("Digite el tiempo de referencia (formato %H:%M:%S): ").strip()
+    tamanio_muestra = int(input("Digite el tamaño de la muestra N: ").strip())
+    
+    total, muestra, tiempo = lg.req_4(control, fecha_terminacion, momento, tiempo_referencia, tamanio_muestra)
+    
+    if total == 0:
+        print("No se encontraron trayectos para los criterios dados.")
+        return
+    
+    print("\nTiempo de la ejecución del requerimiento en milisegundos:", tiempo)
+    print("Número total de trayectos que cumplieron el filtro de fecha y hora de terminación:", total)
+    
+    headers = [
+        "Fecha y tiempo de recogida (AAAA-MM-DD HH:MM:SS)",
+        "Latitud y longitud de recogida ([Latitud, Longitud])",
+        "Fecha y tiempo de terminación (AAAA-MM-DD HH:MM:SS) – criterio de ordenamiento",
+        "Latitud y longitud de terminación ([Latitud, Longitud])",
+        "Distancia recorrida (millas)",
+        "Costo total pagado"
+    ]
+    
+    rows = []
+    
+    if type(muestra) == tuple:
+        primero, ultimo = muestra
+        for viaje in primero:
+            rows.append([
+                viaje['pickup_datetime'].strftime('%Y-%m-%d %H:%M:%S'),
+                f"[{viaje['pickup_latitude']:.6f}, {viaje['pickup_longitude']:.6f}]",
+                viaje['dropoff_datetime'].strftime('%Y-%m-%d %H:%M:%S'),
+                f"[{viaje['dropoff_latitude']:.6f}, {viaje['dropoff_longitude']:.6f}]",
+                f"{viaje['trip_distance']:.2f}",
+                f"{viaje['total_amount']:.2f}"
+            ])
+        if al.size(ultimo) > 0:
+            rows.append(["--- Últimos N ---", "", "", "", "", ""])
+        for viaje in ultimo:
+            rows.append([
+                viaje['pickup_datetime'].strftime('%Y-%m-%d %H:%M:%S'),
+                f"[{viaje['pickup_latitude']:.6f}, {viaje['pickup_longitude']:.6f}]",
+                viaje['dropoff_datetime'].strftime('%Y-%m-%d %H:%M:%S'),
+                f"[{viaje['dropoff_latitude']:.6f}, {viaje['dropoff_longitude']:.6f}]",
+                f"{viaje['trip_distance']:.2f}",
+                f"{viaje['total_amount']:.2f}"
+            ])
+    else:
+        for viaje in muestra:
+            rows.append([
+                viaje['pickup_datetime'].strftime('%Y-%m-%d %H:%M:%S'),
+                f"[{viaje['pickup_latitude']:.6f}, {viaje['pickup_longitude']:.6f}]",
+                viaje['dropoff_datetime'].strftime('%Y-%m-%d %H:%M:%S'),
+                f"[{viaje['dropoff_latitude']:.6f}, {viaje['dropoff_longitude']:.6f}]",
+                f"{viaje['trip_distance']:.2f}",
+                f"{viaje['total_amount']:.2f}"
+            ])
+    
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
 
 
 def print_req_5(control):
     """
-        Función que imprime la solución del Requerimiento 5 en consola
+    Función que imprime la solución del Requerimiento 5 en consola
     """
-    # TODO: Imprimir el resultado del requerimiento 5
-    datehour = input("Ingrese la fecha y hora (formato YYYY-MM-DD HH): ")
-    N = int(input("Ingrese el número de trayectos a mostrar (N): "))
-
-    result = controller.req_5(control, datehour, N)
-
-    print("\n=== Resultado Requerimiento 5 ===")
-    print(f"Tiempo de ejecución: {result['time_ms']} ms")
-    print(f"Total de trayectos encontrados: {result['total']}")
-
+    hora_terminacion = input("Digite la fecha y hora de terminación (formato %Y-%m-%d %H): ").strip()
+    tamanio_a_mostrar = int(input("Digite el tamaño de la muestra N: ").strip())
+    total, muestra, tiempo = lg.req_5(control, hora_terminacion, tamanio_a_mostrar)
+    if al.size(muestra) == 0:
+        print("No se encontraron trayectos para los criterios dados.")
+        return
+    print("\nTiempo de la ejecución del requerimiento en milisegundos:", tiempo)
+    print("Número total de trayectos que cumplieron el filtro de fecha y hora de terminación:", total)
+    headers = [
+        "Fecha y tiempo de recogida (AAAA-MM-DD HH:MM:SS)",
+        "Latitud y longitud de recogida ([Latitud, Longitud])",
+        "Fecha y tiempo de terminación (AAAA-MM-DD HH:MM:SS)",
+        "Latitud y longitud de terminación ([Latitud, Longitud])",
+        "Distancia recorrida (millas)",
+        "Costo total pagado"
+    ]
+    rows = []
+    if total <= 2 * tamanio_a_mostrar:
+        for viaje in muestra:
+            rows.append([
+                viaje['pickup_datetime'],
+                f"[{float(viaje['pickup_latitude']):.6f}, {float(viaje['pickup_longitude']):.6f}]",
+                viaje['dropoff_datetime'],
+                f"[{float(viaje['dropoff_latitude']):.6f}, {float(viaje['dropoff_longitude']):.6f}]",
+                f"{float(viaje['trip_distance']):.2f}",
+                f"{float(viaje['total_amount']):.2f}"
+            ])
+    else:
+        primero = al.sub_list(muestra, 0, tamanio_a_mostrar)
+        ultimo = al.sub_list(muestra, al.size(muestra) - tamanio_a_mostrar, tamanio_a_mostrar)
+        for viaje in primero:
+            rows.append([
+                viaje['pickup_datetime'],
+                f"[{float(viaje['pickup_latitude']):.6f}, {float(viaje['pickup_longitude']):.6f}]",
+                viaje['dropoff_datetime'],
+                f"[{float(viaje['dropoff_latitude']):.6f}, {float(viaje['dropoff_longitude']):.6f}]",
+                f"{float(viaje['trip_distance']):.2f}",
+                f"{float(viaje['total_amount']):.2f}"
+            ])
+        if al.size(ultimo) > 0:
+            rows.append(["--- Últimos N ---", "", "", "", "", ""])
+        for viaje in ultimo:
+            rows.append([
+                viaje['pickup_datetime'],
+                f"[{float(viaje['pickup_latitude']):.6f}, {float(viaje['pickup_longitude']):.6f}]",
+                viaje['dropoff_datetime'],
+                f"[{float(viaje['dropoff_latitude']):.6f}, {float(viaje['dropoff_longitude']):.6f}]",
+                f"{float(viaje['trip_distance']):.2f}",
+                f"{float(viaje['total_amount']):.2f}"
+            ])
+    print("\nMostrar la siguiente información de cada uno de los N primeros trayectos y de los N últimos trayectos:")
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
 
 def print_req_6(control):
     """
-        Función que imprime la solución del Requerimiento 6 en consola
-    """
-    # TODO: Imprimir el resultado del requerimiento 6
-    pass
+    Función que imprime la solución del Requerimiento 6 en consola
+    """    
+    neighborhood_name = input("Digite el nombre del barrio: ").strip()
+    hora_inicial = input("Digite la hora inicial (formato HH): ").strip()
+    hora_final = input("Digite la hora final (formato HH): ").strip()
+    N = int(input("Digite el tamaño de la muestra N: ").strip())
+    total, muestra, tiempo = lg.req_6(control, neighborhood_name, hora_inicial, hora_final, N)
+    if al.size(muestra) == 0:
+        print("No se encontraron trayectos para los criterios dados.")
+        return
+    print("\nTiempo de la ejecución del requerimiento en milisegundos:", tiempo)
+    print("Número total de trayectos que cumplieron el filtro:", total)
+    headers = [
+        "Fecha y tiempo de recogida (AAAA-MM-DD HH:MM:SS)",
+        "Latitud y longitud de recogida ([Latitud, Longitud])",
+        "Fecha y tiempo de terminación (AAAA-MM-DD HH:MM:SS)",
+        "Latitud y longitud de terminación ([Latitud, Longitud])",
+        "Distancia recorrida (millas)",
+        "Costo total pagado"
+    ]
+    rows = []
+    if total <= 2 * N:
+        for viaje in muestra:
+            rows.append([
+                viaje['pickup_datetime'],
+                f"[{viaje['pickup_coords'][0]:.6f}, {viaje['pickup_coords'][1]:.6f}]",
+                viaje['dropoff_datetime'],
+                f"[{viaje['dropoff_coords'][0]:.6f}, {viaje['dropoff_coords'][1]:.6f}]",
+                f"{viaje['trip_distance']:.2f}",
+                f"{viaje['total_amount']:.2f}"
+            ])
+    else:
+        primero = al.sub_list(muestra, 0, N)
+        ultimo = al.sub_list(muestra, al.size(muestra) - N, N)
+        for viaje in primero:
+            rows.append([
+                viaje['pickup_datetime'],
+                f"[{viaje['pickup_coords'][0]:.6f}, {viaje['pickup_coords'][1]:.6f}]",
+                viaje['dropoff_datetime'],
+                f"[{viaje['dropoff_coords'][0]:.6f}, {viaje['dropoff_coords'][1]:.6f}]",
+                f"{viaje['trip_distance']:.2f}",
+                f"{viaje['total_amount']:.2f}"
+            ])
+        if al.size(ultimo) > 0:
+            rows.append(["--- Últimos N ---", "", "", "", "", ""])
+        for viaje in ultimo:
+            rows.append([
+                viaje['pickup_datetime'],
+                f"[{viaje['pickup_coords'][0]:.6f}, {viaje['pickup_coords'][1]:.6f}]",
+                viaje['dropoff_datetime'],
+                f"[{viaje['dropoff_coords'][0]:.6f}, {viaje['dropoff_coords'][1]:.6f}]",
+                f"{viaje['trip_distance']:.2f}",
+                f"{viaje['total_amount']:.2f}"
+            ])
+    print("\nMostrar la siguiente información de cada uno de los N primeros trayectos y de los N últimos trayectos:")
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
+
 
 # Se crea la lógica asociado a la vista
 control = new_logic()
